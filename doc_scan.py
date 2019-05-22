@@ -1,5 +1,5 @@
 from oauth2client.service_account import ServiceAccountCredentials
-from fuzzywuzzy import process as fuzzy_process
+from fuzzywuzzy import process
 import asyncio
 import gspread
 
@@ -68,7 +68,7 @@ class DocScanner:
         splits_names = [name[0] for name in splits_list if name[1] is not None]
 
         # Finds 5 closest matches to provided name above cutoff score of 90
-        result = fuzzy_process.extractBests(name, splits_names, score_cutoff=90)
+        result = process.extractBests(name, splits_names, score_cutoff=90)
 
         # Returns best search, if no results returns None
         if len(result) == 0:
