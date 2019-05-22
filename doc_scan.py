@@ -56,7 +56,7 @@ class DocScanner:
         self.sheet = gc.open_by_url(ss_URL).worksheet(ws_name)
 
 
-    """
+    '''
     async def _fuzzy_search(self, name, splits_list=None):
         """Returns the result of a fuzzy search for the name in the doc"""
 
@@ -76,7 +76,7 @@ class DocScanner:
         else:
             fuzz_name = result[0][0]
             return fuzz_name
-    """
+    '''
 
     async def _exact_search(self, name, splits_list=None):
         """Returns row of exact matching name in sheet (-1 if not found)""" 
