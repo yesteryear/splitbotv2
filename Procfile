@@ -1,1 +1,1 @@
-worker: python without_fuzzy.py
+worker: python main.py
