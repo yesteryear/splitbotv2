@@ -259,7 +259,8 @@ async def on_message(message):
             await message.channel.send(reply)
             print_log(reply)
 
-    except(gspread.exceptions.APIError):
+    except gspread.exceptions.APIError as error:
+        print_log(error)
         reply = help_text.API_error
         await message.channel.send(reply)
 
