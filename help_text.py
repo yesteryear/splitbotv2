@@ -20,8 +20,7 @@ examples:
 !add INGAME_GAME, 0, 1/30/2019
 """
 
-API_error = """API Error! There's been too many commands in too short of a period of time. The API can only handle 100 actions per 100 seconds. 
-Please wait at least two minutes and try again"""
+API_error = """API Error! Either the bot has been spammed or it has been disconnected connected, please use !reconnect"""
 
 Initial_Message = "If any of these values are incorrect, please modify or delete the congifs.json and restart the bot"
 

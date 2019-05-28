@@ -42,18 +42,19 @@ class DocScanner:
         """
 
         # Grabs credentials and API information
-        scope = [
+        self.scope = [
             'https://spreadsheets.google.com/feeds', 
             'https://www.googleapis.com/auth/drive'
         ]
-        creds = ServiceAccountCredentials.from_json_keyfile_name(
+        self.creds = ServiceAccountCredentials.from_json_keyfile_name(
             'credentials.json', 
-            scope
+            self.scope
         )
-
+        self.ss_URL = ss_URL
+        self.ws_name = ws_name
         # Opens the document and assigns worksheet to instance variable
-        gc = gspread.authorize(creds)
-        self.sheet = gc.open_by_url(ss_URL).worksheet(ws_name)
+        gc = gspread.authorize(self.creds)
+        self.sheet = gc.open_by_url(self.ss_URL).worksheet(self.ws_name)
 
 
     '''
@@ -77,6 +78,11 @@ class DocScanner:
             fuzz_name = result[0][0]
             return fuzz_name
     '''
+
+    async def reconnect(self):
+        """ Command to reconnect via gsheets incase connection is broken"""
+        gc = gspread.authorize(self.creds)
+        self.sheet = gc.open_by_url(self.ss_URL).worksheet(self.ws_name)
 
     async def _exact_search(self, name, splits_list=None):
         """Returns row of exact matching name in sheet (-1 if not found)""" 
