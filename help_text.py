@@ -20,7 +20,7 @@ examples:
 !add INGAME_GAME, 0, 1/30/2019
 """
 
-API_error = """API Error! Either the bot has been spammed or it has been disconnected connected, please use !reconnect"""
+API_error = "API Error! Either the bot has been spammed or it has been disconnected connected, please use !reconnect"
 
 Initial_Message = "If any of these values are incorrect, please modify or delete the congifs.json and restart the bot"
 
