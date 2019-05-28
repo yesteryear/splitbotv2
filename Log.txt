@@ -336,3 +336,40 @@
 2019-05-20 18:14:01 - 580086626173190148
 2019-05-20 18:14:01 - ------
 2019-05-20 18:14:11 - User Daviid: !help
+2019-05-27 20:43:59 - ==========
+2019-05-27 20:43:59 - ==========
+2019-05-27 20:43:59 - Welcome! Initializing bot...
+2019-05-27 20:44:00 - Loading Configs File...
+2019-05-27 20:44:00 - configs.json file loaded
+2019-05-27 20:44:01 - Verifying configuration settings...
+2019-05-27 20:44:01 - If any of these values are incorrect, please modify or delete the congifs.json and restart the bot
+2019-05-27 20:44:04 - -----
+2019-05-27 20:44:04 - Preparing to open spreadsheet...
+2019-05-27 20:44:05 - Loading document...
+2019-05-27 20:44:06 - Document loaded correctly
+2019-05-27 20:44:07 - Initiating Discord API...
+2019-05-27 20:44:12 - Logged in as
+2019-05-27 20:44:13 - SplitBot
+2019-05-27 20:44:13 - 580086626173190148
+2019-05-27 20:44:14 - ------
+2019-05-27 20:44:23 - User Xaad: !help
+2019-05-27 20:44:36 - User Xaad: !splits baum
+2019-05-27 20:44:38 - Can't find the name baum in the list!
+2019-05-27 20:44:59 - User Xaad: !help
+2019-05-27 20:45:58 - ==========
+2019-05-27 20:45:58 - ==========
+2019-05-27 20:45:59 - Welcome! Initializing bot...
+2019-05-27 20:45:59 - Loading Configs File...
+2019-05-27 20:45:59 - configs.json file loaded
+2019-05-27 20:46:00 - Verifying configuration settings...
+2019-05-27 20:46:00 - If any of these values are incorrect, please modify or delete the congifs.json and restart the bot
+2019-05-27 20:46:03 - -----
+2019-05-27 20:46:04 - Preparing to open spreadsheet...
+2019-05-27 20:46:04 - Loading document...
+2019-05-27 20:46:06 - Document loaded correctly
+2019-05-27 20:46:06 - Initiating Discord API...
+2019-05-27 20:46:12 - Logged in as
+2019-05-27 20:46:13 - SplitBot
+2019-05-27 20:46:13 - 580086626173190148
+2019-05-27 20:46:14 - ------
+2019-05-27 20:46:25 - User Xaad: !help
