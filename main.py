@@ -155,6 +155,10 @@ async def on_message(message):
     }
 
     try:
+        if message.content.startswith('!reconnect'):
+            doc.reconnect()
+            await message.channel.send('Resetting connection...')
+
         if message.content.startswith("!splits "):
             print_log("User {}: {}".format(author, message.content))
             """Returns splits by user request"""
