@@ -1,0 +1,10 @@
+// Rename this file as "configs.json" and save in the same location as the
+// script or executable (whichever is being used). ONLY add values within the ""
+// Do NOT remove the , after or change any other names or values
+// ALSO IMPORTANT: REMOVE THESE COMMENTS WHEN YOU ARE DONE
+{
+    "Bot Token": "",
+    "Admin Rank": "",
+    "Spreadsheet URL": "",
+    "Worksheet Name": ""
+}

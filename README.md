@@ -5,8 +5,8 @@ This discord bot automatically pulls and updates information regarding OSRS spli
 
 ## Main Discord Commands:
 
-### **!splits (player)**:
-Finds the player (by their RSN) and get's their split value. The search for the user is a bit forgiving for spelling errors. 
+### **!check (player)**:
+Finds the player (by their RSN) and get's their split value. 
 
 ### **!update (player), (amount), (items)**
 This command requires the bot admin rank.
@@ -32,7 +32,7 @@ Note that while split, date, and items are optional, if you wish to add any of t
 > !add Jagex, 1/1/2019 - This is INVALID
 > !add Jagex, 0, 1/1/2019 - This is VALID
 
-### **!help**
+### **!splits_help**
 Posts the commands in chat.
 
 ---
@@ -44,6 +44,8 @@ The bot was designed for a specific spreadsheet format and must meet the followi
 2. Split Values need to be in Column B  
 3. Item Names need to be in Column C  
 4. Clan Join Dates need to be in Column D  
+5. Rank needs to be in Column E
+6. Days in clan needs to be in Column G
 
 Additionally, there should be blank rows below so that additional members can be added. These rows at the very least should have =TODAY() under the clan join date as the bot copies and pastes that when adding a user without a specific join date.   
 
@@ -88,11 +90,12 @@ Credentials for the google doc are now set!
 The discord bot is now ready, all that is left to connect the bot to the script
 
 ### Connecting script to the bot:
-1. If you initiate the script without any changes, it will run through a prompt to set up a configs file. It will ask you for the following 4 settings:
+1. Before the bot can connect, there are some settings which need to be established. 
+2. There is a file called configs template.json. This file has to be filled out correctly with these values:
   a. Bot Token
   b. Admin Rank
   c. Spreadsheet URL
   d. Worksheet Name
-2. Follow the prompts given in the script and it will set itself up and save those settings in a file labled configs.json. 
-3. You can also make this file and set the configurations manually. A template for the configs file is available in the repository, just ensure the file is named configs.json.
-4. Anytime there is a change to the sheet (such as a different URL or worksheet name, change in bot token or change in admin rank name) the configs file needs to be updated. This can be done manually or you can delete the file and run through the first time set-up again. 
+3. Make sure you put the values within the quotations "" without changing any of the other formatting
+4. Rename the file as configs.json and save it in the same folder as main.py
+
