@@ -1,300 +1,290 @@
-import sys
-import asyncio 
-import time
 import discord
+import asyncio
 import json
 import gspread
-import help_text
-from doc_scan import DocScanner
+import re
 from datetime import datetime
-
-client = discord.Client()
-
-def print_log(text, delay=0.35):
-    """Prints message with time in console and to log file"""
-    curTime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    message = curTime + " - " + str(text)
-    print(message)
-    with open("Log.txt", "a") as logger:
-        logger.write(message + "\n")
-    time.sleep(delay)
+from doc_scan import DocScanner
+from help_text import help_embed, API_error
 
 
-def validate_date(given_date):
-    """Confirms format of the date to match dd/mm/YYYY or mm/dd/YYYY"""
-    try:
-        datetime.strptime(given_date, "%m/%d/%Y")
-        return True
-    except(ValueError, TypeError):
-        return False
+class RedemptionBot(discord.Client):
+    """Discord client for all Redemption Bot operations"""
 
+    def __init__(self, doc, configs):
+        super().__init__()
+        self.token = configs['Bot Token']
+        self.admin_name = configs['Admin Rank']
+        self.doc = doc
+        self.start_bot()
 
-def invalid_input():
-    print_log(help_text.Invalid_Input)
-    sys.exit()
+    def start_bot(self):
+        """Connects discord API"""
+        loop = asyncio.get_event_loop()
+        loop.create_task(self.start(self.token))
+        try:
+            loop.run_forever()
+        finally:
+            loop.stop()
 
+    async def on_ready(self):
+        print('Logged in successfully')
+        print(self.user.name)
+        print(self.user.id)
+        print('-' * 5)
+        game = discord.Game('!splits_help')
+        await self.change_presence(activity=game)
 
-def first_time_setup():
-    print_log("Please answer the following questions", 1)
-    print_log("Please ensure Google API credentials are setup as per Readme", 1)
-    print_log("Press enter to continue", 1)
-    input()
+    async def on_message(self, message):
+        """Bot commands via text inputs"""
+        # Prevent bot responding to itself
+        if message.author == self.user:
+            return
 
-    configs = {}
-    print_log("1. Enter the Bot Token from the discord developement page (consult Readme for more info)")
-    configs["Bot Token"] = str(input()).strip()
+        # Verify command was sent
+        command = re.search(r'^![a-z_]+', message.content)
+        if command is None:
+            return
 
-    print_log("2. Enter the EXACT name of the required rank for bot admin commands")
-    configs["Admin Rank"] = str(input()).strip()
-
-    print_log("3. Enter the exact URL of the spreadsheet")
-    configs["Spreadsheet URL"] = str(input()).strip()
-
-    print_log("4. Enter the exact name of the worksheet (or tab) of the google doc")
-    configs["Worksheet Name"] = str(input()).strip()
-
-
-    with open("configs.json", "w") as file:
-        json.dump(configs, file, indent=4)
-
-    return configs
-
-
-# Initiates bot, verifies all settings then launches Docs API
-try:
-    print_log("=" * 10)
-    print_log("=" * 10)
-    print_log("Welcome! Initializing bot...")
-
-
-    # Loads configs file, if configs file does not exist initiates first time setup
-    try:
-        print_log("Loading Configs File...")
-        configs = {}
-        # Opens and loads configs file
-        with open("configs.json", "r") as configs_file:
-            print_log("configs.json file loaded")
-            configs = json.load(configs_file)
-    # If Configs/configs.json does not exist, initiates FTS
-    except(FileNotFoundError):
-        print_log("configs.json was not found, initiating First Time Setup", 2)
-        configs = first_time_setup()
-
-
-    # Verifies all entries and google credentials file exist. 
-    print_log("Verifying configuration settings...")
-    try:
-        file = open("credentials.json", "r")
-        file.close()
-    except(FileNotFoundError):
-        print_log("credentials.json was not found, please consult the Readme")
-        sys.exit()
-
-    req_configs = (
-        "Bot Token", 
-        "Admin Rank",
-        "Spreadsheet URL",
-        "Worksheet Name",
-    )
-    try:
-        for req in req_configs:
-            configs[req]
-    except(KeyError):
-        print_log("One or more of the required configs missing.")
-        invalid_input()
-
-    print(json.dumps(configs, indent=4))
-    print_log(help_text.Initial_Message, 3)
-
-    print_log("-" * 5)
-
-    # Prepares to open sheet, if error encounters exists application
-    print_log("Preparing to open spreadsheet...")
-
-    # Initiates spreadsheet or catches error when failed
-    url = configs["Spreadsheet URL"]
-    worksheet = configs["Worksheet Name"]
-    print_log("Loading document...")
-    try:
-        doc = DocScanner(url, worksheet)
-        print_log("Document loaded correctly")
-    except(gspread.exceptions.NoValidUrlKeyFound): 
-        print_log("ERROR: Document could not be loaded from the URL")
-        invalid_input()
-    except(gspread.exceptions.WorksheetNotFound):
-        print_log("ERROR: Document could not find worksheet " + worksheet)
-        invalid_input()
-    except(FileNotFoundError):
-        print_log("ERROR: Credentials file could not be found")
-        print_log("Please obtain credentials as outlined in the Readme")
-
-    admin_rank = configs["Admin Rank"]
-    token = configs["Bot Token"]
-
-
-except(SystemExit):
-    print_log("Press enter to exit...")
-    input()
+        # Prepares basic variables
+        command = command.group()
+        command = command.replace('!', '')
+        msg = message.content.replace(f'!{command}', '').strip()
+        author = message.author
+        channel = message.channel
+        guild = channel.guild
+        isAdmin = str(author.roles).find(self.admin_name) != -1
+        
+        try:
+            await self.check(command, msg, author, channel, guild, isAdmin)
+        except gspread.exceptions.APIError:
+            await channel.send(API_error)
 
 
 
-@client.event
-async def on_message(message):
-    """Initiates command by bot based on inputs"""
-
-    # we do not want the bot to reply to itself
-    if message.author == client.user:
-        return
-
-    author = message.author.name
-    admin = str(message.author.roles).find(admin_rank) != -1
-
-    incorrect_input_message = {
-        "int": "Please enter a number without commas or symbols for the split.",
-        "date": "Please make sure date format is M/D/YYYY."
-    }
-
-    try:
-        if message.content.startswith("!splits "):
-            print_log("User {}: {}".format(author, message.content))
-            """Returns splits by user request"""
-            msg = message.content
-            username = msg.replace("!splits", "").strip()
-            response = await doc.get_split(username)
-            print(response)
-            if response is None:
-                reply = "Can't find the name {} in the list!".format(username)
-            else:
-                name = response[1]
-                amount = response[0]
-                reply = "{} has an item split of {:,}!".format(name, amount)
-            await message.channel.send(reply)
-            print_log(reply)
+    async def check(self, command, msg, author, channel, guild, isAdmin):
+        """Commands:
+        !check
+        !update
+        !add
+        !splits_help
+        """
+        if command == 'check':
+            # Request to find information on member
+            print(f'User {author}: Checking for "{msg}"')
+            await channel.trigger_typing()
+            await self.send_user(msg, channel, guild)
             
-        if message.content.startswith("!update ") and admin is True:
-            print_log("User {}: {}".format(author, message.content))
-            """Adds split amount if user has admin rank"""
-            msg = message.content
+        if command == 'update' and isAdmin:
+            print(f'User {author} updating: "{msg}"')
+            await channel.trigger_typing()
 
-            # Splits input 
-            request = msg.replace("!update", "").split(",")
+            # Updates user info (!update <name>, <split change>, <items>)
+            inputs = msg.split(',')
 
-            # Grabs name
-            name = request[0].strip()
-
-            # Gets splits value, if value was invalid prints appropriate message
-            try:
-                delta = int(request[1].strip())
+            # Name:
+            name = inputs[0].strip()
+            # Delta Values:
+            try: 
+                delta = int(inputs[1])
             except(ValueError, SyntaxError, TypeError, IndexError):
-                delta = None
+                await channel.send("Incorrect format, see !splits_help")
+                return
+            # Gathers items
+            items = ', '.join(inputs[2:]).strip() if len(inputs) > 2 else None
 
-            # Gets list of items if it exists
-            item_list = ", ".join(request[2:]).strip() if len(request) > 2 else None
+            # Updates sheet
+            updates = self.doc.update_split(name, delta, items)
+            if updates is None:
+                await channel.send(f'Cant find "{name}" on the sheet')
+                return
             
-            # Updates split value and sends response to discord server
-            if delta is not None:
-                response = await doc.update_split(name, delta, item_list)
-                if response is not None:
-                    username = response[2]
-                    prev_val = response[0]
-                    new_val = response[1]
-                    reply = "{}'s split changed from {:,} to {:,}.".format(
-                        username,
-                        prev_val, 
-                        new_val
-                    )
-                else:
-                    reply = "Can't find player {}".format(name)
+
+            # Builds Embed
+            prev_val, new_val, old_items, new_items = updates
+            em_title = f"Splits increased by {delta:,}!"
+            em_desc = f"-----"
+            em_author = f"Updating {name}'s stats"
+            em_url = None
+            em_color = 0x01b0cf
+            em_name_a = "Old Splits"
+            em_val_a = "{:,}".format(prev_val)
+            em_name_b = "New Splits"
+            em_val_b = "{:,}".format(new_val)
+            em_name_c = "Old Items"
+            em_val_c = old_items
+            em_name_d = "New Items"
+            em_val_d = new_items
+
+            player = guild.get_member_named(name)
+            if player is not None:
+                em_url = str(player.avatar_url)
+
+            embed = discord.Embed(
+                title=em_title, 
+                description=em_desc, 
+                color=em_color
+            )
+            if em_url is not None:
+                embed.set_author(name=em_author, icon_url=em_url)
             else:
-                reply = incorrect_input_message["int"]
+                embed.set_author(name=em_author)
+            embed.add_field(name=em_name_a, value=em_val_a, inline=True)
+            embed.add_field(name=em_name_b, value=em_val_b, inline=True)
+            embed.add_field(name=em_name_c, value=em_val_c, inline=False)
+            embed.add_field(name=em_name_d, value=em_val_d, inline=False)
 
-            await message.channel.send(reply)
-            print_log(reply)
+            await channel.send(embed=embed)
 
-        if message.content.startswith("!add ") and admin is True:
-            print_log("User {}: {}".format(author, message.content))
-            """Adds user with inputs (!add_user name (split) (date) (items))"""
-            msg = message.content
+        if command == 'add' and isAdmin:
+            print(f'User {author} adding: "{msg}"')
+            await channel.trigger_typing()
 
-            # Splits input 
-            request = msg.replace("!add", "").split(",")
-
-            # Grabs name
-            name = request[0].strip()
-            reply = "The player {} was added".format(name)
-
-            # Will prevent the doc API call if the provided inputs are incorrect
-            validate_inputs = True
+            # Grabs inputs 
+            inputs = msg.split(',')
+            name = None
             splits = 0
             date = None
-            item_list = ''
+            items = []
 
-            # Gets and confirms split value
-            if len(request) > 1:
-                try:
-                    split = int(request[1].strip())
-                    reply += " with a split value of {}".format(split)
-                except(TypeError, ValueError):
-                    validate_inputs = False
-                    reply = incorrect_input_message["int"]
-
-            # Gets and confirms date value
-            if (len(request) > 2) and (validate_inputs is True):
-                date = request[2].strip()
-                if validate_date(date) is True:
-                    reply += ", and the join date {}".format(date)
+            for i in range(len(inputs)):
+                if i == 0:
+                    name = inputs[i].strip()
+                    if name == '':
+                        await channel.send('I need a name (see !splits_help)')
+                        return 
+                elif i == 1:
+                    try:
+                        splits = int(inputs[i].strip())
+                    except (ValueError, SyntaxError, TypeError, IndexError):
+                        await channel.send('Incorrect splits format (see !splits_help)')
+                        return
+                elif i == 2:
+                    date_format = r'^[0-1]?[0-9]/[0-3]?[0-9]/20[0-9][0-9]$'
+                    check = re.match(date_format, inputs[i].strip())
+                    if check is None:
+                        await channel.send('Incorrect date format (see !splits_help)')
+                        return 
+                    date = check.group()
+                    try:
+                        datetime.strptime(date, r'%m/%d/%Y')
+                    except ValueError:
+                        await channel.send('Incorrect date format (see !splits_help)')
+                        return 
                 else:
-                    validate_inputs = False
-                    reply = incorrect_input_message["date"]
+                    items.append(inputs[i])
+            item_list = ', '.join(items)
 
-            # Gets list of items
-            item_list = ", ".join(request[3:]).strip() if len(request) > 2 else ""
+            # Attempts to add based on provided info
+            results = self.doc.add_user(name, splits, date, item_list)
 
-            if validate_inputs is True:
-                reply += "!"
-                added = await doc.add_user(name, splits, date, item_list)
-                if added is False:
-                    reply = "User {} already exists!".format(name)
+            if results is None:
+                await channel.send('User already exists!')
+            else:
+                await self.send_user(name, channel, guild)
 
-            await message.channel.send(reply)
-            print_log(reply)
-
-    except(gspread.exceptions.APIError):
-        reply = help_text.API_error
-        await message.channel.send(reply)
-
-    if message.content.startswith("!help"):
-        print_log("User {}: {}".format(author, message.content))
-        reply = help_text.help_reply
-        if admin is True:
-            reply = reply + "\n" + help_text.admin_help_reply
-        await message.channel.send(reply)
-
-    # Exit command - for debugging purposes only
-    # if message.content.startswith("!exit"):
-    #    await client.logout()
+        if command == 'splits_help':
+            await channel.trigger_typing()
+            # Sends help text
+            em = help_embed
+            emb = discord.Embed(
+                title=em['title'], 
+                description=em['desc'], 
+                color=0x01b0cf
+            )
+            v_up = em['v_up'].replace('@ADMIN', self.admin_name)
+            v_add = em['v_add'].replace('@ADMIN', self.admin_name)
+            emb.add_field(name=em['n_check'], value=em['v_check'], inline=False)
+            emb.add_field(name=em['n_up'], value=v_up, inline=False)
+            emb.add_field(name=em['n_add'], value=v_add, inline=False)
+            emb.set_footer(text=em['footer'])
+            await channel.send(embed=emb)
 
 
-@client.event
-async def on_ready():
-    print_log("Logged in as")
-    print_log(client.user.name)
-    print_log(client.user.id)
-    print_log("------")
+    async def send_user(self, name, channel, guild):
+        # Send embed with splits info
 
-# Initiates dicord API
-try:
-    print_log("Initiating Discord API...")
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(client.start(token))
-except(discord.errors.LoginFailure):
-    print_log("ERROR: Token was not accepted or correct")
-    invalid_input()
-except(discord.errors.GatewayNotFound, discord.errors.HTTPException):
-    print_log("ERROR: Cannot load discord API")
-    print_log("This can be due to lack of internet connection or API outage")
-    print_log("Please try again later")
-    sys.exit()
-except(SystemExit):
-    print_log("Press enter to exit...")
-    input()
+        values = self.doc.get_split(name)
+        if values is None:
+            await channel.send(f'Can\'t find someone named "{name}"')
+            return
+
+        # Prepares display values
+        splits = values[1]
+        days = values[3]
+        rank = values[4]
+        avatar = None
+
+        player = guild.get_member_named(name)
+        if player is not None:
+            avatar = str(player.avatar_url)
+        
+        # Build embed
+        em_title = "Split Value:"
+        em_desc = "{:,}".format(splits)
+        em_color = 0x01b0cf
+        em_author = f"{name}'s stats:"
+        em_url = avatar
+        em_name_a = "Current Rank: "
+        em_value_a = f'{rank}'
+        em_name_b = "Days in Clan: "
+        em_value_b = f'{days} days'
+
+        embed = discord.Embed(
+            title=em_title, 
+            description=em_desc, 
+            color=em_color
+        )
+        if em_url is not None:
+            embed.set_author(name=em_author, icon_url=em_url)
+        else:
+            embed.set_author(name=em_author)
+        embed.add_field(name=em_name_a, value=em_value_a, inline=False)
+        embed.add_field(name=em_name_b, value=em_value_b, inline=False)
+
+        await channel.send(embed=embed)
+
+
+def start():
+    print("Initiating...")
+    try:
+        with open("configs.json", "r") as configs_file:
+            print("configs.json file loaded")
+            configs = json.loads(configs_file.read())
+    except(FileNotFoundError):
+        print('ERROR: Configs file not found, please consult Readme')
+        return
+
+    # Verifies configs
+    reqs = ("Bot Token", "Admin Rank", "Spreadsheet URL", "Worksheet Name")
+    if not all(req in configs for req in reqs):
+        print('ERROR: Configs not formatting correctly, please consult the Readme')
+        return
+
+    # Opens document
+    print('Loading Google sheet...')
+    try:
+        doc = DocScanner(configs["Spreadsheet URL"], configs["Worksheet Name"])
+        print("Document loaded correctly")
+    except(gspread.exceptions.NoValidUrlKeyFound): 
+        print("ERROR: Document could not be loaded from the URL")
+        invalid_input()
+    except(gspread.exceptions.WorksheetNotFound):
+        print("ERROR: Document could not find worksheet " + worksheet)
+        invalid_input()
+    except(FileNotFoundError):
+        print("ERROR: Credentials file not found, please consult Readme")
+
+    # Loads bot API
+    print('Loading discord bot...')
+    redemption_bot = RedemptionBot(doc, configs)
+    
+    # Shuts down
+    print('Bot successfully shut down')
+    print('Good bye')
+    
+
+
+
+if __name__ == "__main__":
+    start()
