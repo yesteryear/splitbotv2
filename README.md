@@ -29,7 +29,7 @@ Note that the last three are completely optional. If you just wish to add a play
 Splits must follow the number format specified in !update. Dates must be of the form M/D/YYYY (following American date format)
 Note that while split, date, and items are optional, if you wish to add any of them they must be added in that order and you can't skip an option. For example, say you wanted to add a player who joined last month, but they dont have any split value, must add the split in the command or it will not work.
 
-> !add Jagex, 1/1/2019 - This is INVALID
+> !add Jagex, 1/1/2019 - This is INVALID  
 > !add Jagex, 0, 1/1/2019 - This is VALID
 
 ### **!help**
