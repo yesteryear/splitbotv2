@@ -112,9 +112,9 @@ class RedemptionBot(discord.Client):
             em_name_b = "New Splits"
             em_val_b = "{:,}".format(new_val)
             em_name_c = "Old Items"
-            em_val_c = old_items
+            em_val_c = old_items if old_items is not '' else '-'
             em_name_d = "New Items"
-            em_val_d = new_items
+            em_val_d = new_items if new_items is not '' else '-'
 
             player = guild.get_member_named(name)
             if player is not None:
