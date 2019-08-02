@@ -32,7 +32,7 @@ class RedemptionBot(discord.Client):
         print(self.user.name)
         print(self.user.id)
         print('-' * 5)
-        game = discord.Game('!splits_help')
+        game = discord.Game('.splits_help')
         await self.change_presence(activity=game)
 
     async def on_message(self, message):
@@ -42,14 +42,14 @@ class RedemptionBot(discord.Client):
             return
 
         # Verify command was sent
-        command = re.search(r'^![a-z_]+', message.content)
+        command = re.search(r'^.[a-z_]+', message.content)
         if command is None:
             return
 
         # Prepares basic variables
         command = command.group()
-        command = command.replace('!', '')
-        msg = message.content.replace(f'!{command}', '').strip()
+        command = command.replace('.', '')
+        msg = message.content.replace(f'.{command}', '').strip()
         author = message.author
         channel = message.channel
         guild = channel.guild
@@ -57,6 +57,12 @@ class RedemptionBot(discord.Client):
         
         try:
             await self.check(command, msg, author, channel, guild, isAdmin)
+
+            # Added 8/2/2019
+            # Delete message if it was .update
+            if command == 'update':
+                await message.delete()
+            
         except gspread.exceptions.APIError:
             await channel.send(API_error)
 
@@ -64,10 +70,10 @@ class RedemptionBot(discord.Client):
 
     async def check(self, command, msg, author, channel, guild, isAdmin):
         """Commands:
-        !check
-        !update
-        !add
-        !splits_help
+        .check
+        .update
+        .add
+        .splits_help
         """
         if command == 'check':
             # Request to find information on member
@@ -88,7 +94,7 @@ class RedemptionBot(discord.Client):
             try: 
                 delta = int(inputs[1])
             except(ValueError, SyntaxError, TypeError, IndexError):
-                await channel.send("Incorrect format, see !splits_help")
+                await channel.send("Incorrect format, see .splits_help")
                 return
             # Gathers items
             items = ', '.join(inputs[2:]).strip() if len(inputs) > 2 else None
@@ -151,25 +157,25 @@ class RedemptionBot(discord.Client):
                 if i == 0:
                     name = inputs[i].strip()
                     if name == '':
-                        await channel.send('I need a name (see !splits_help)')
+                        await channel.send('I need a name (see .splits_help)')
                         return 
                 elif i == 1:
                     try:
                         splits = int(inputs[i].strip())
                     except (ValueError, SyntaxError, TypeError, IndexError):
-                        await channel.send('Incorrect splits format (see !splits_help)')
+                        await channel.send('Incorrect splits format (see .splits_help)')
                         return
                 elif i == 2:
                     date_format = r'^[0-1]?[0-9]/[0-3]?[0-9]/20[0-9][0-9]$'
                     check = re.match(date_format, inputs[i].strip())
                     if check is None:
-                        await channel.send('Incorrect date format (see !splits_help)')
+                        await channel.send('Incorrect date format (see .splits_help)')
                         return 
                     date = check.group()
                     try:
                         datetime.strptime(date, r'%m/%d/%Y')
                     except ValueError:
-                        await channel.send('Incorrect date format (see !splits_help)')
+                        await channel.send('Incorrect date format (see .splits_help)')
                         return 
                 else:
                     items.append(inputs[i])
@@ -211,6 +217,7 @@ class RedemptionBot(discord.Client):
 
         # Prepares display values
         splits = values[1]
+        items = values[2]
         days = values[3]
         rank = values[4]
         avatar = None
@@ -229,6 +236,10 @@ class RedemptionBot(discord.Client):
         em_value_a = f'{rank}'
         em_name_b = "Days in Clan: "
         em_value_b = f'{days} days'
+        # 8/2/2019 Update: added items to display
+        if items:
+            em_name_c = "Items: "
+            em_value_c = items
 
         embed = discord.Embed(
             title=em_title, 
@@ -241,6 +252,8 @@ class RedemptionBot(discord.Client):
             embed.set_author(name=em_author)
         embed.add_field(name=em_name_a, value=em_value_a, inline=False)
         embed.add_field(name=em_name_b, value=em_value_b, inline=False)
+        if items:
+            embed.add_field(name=em_name_c, value=em_value_c, inline=False)
 
         await channel.send(embed=embed)
 
