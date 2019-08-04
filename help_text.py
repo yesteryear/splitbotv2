@@ -9,6 +9,8 @@ help_embed = {
     "v_up": "Adds the split given to the player with the matching RSN. Items are optional but should be added as a comma separated list at the end. Requires the @ADMIN role.",
     "n_add": ".add <RSN>, <splits>, <date>, <items>",
     "v_add": "Creates a new player entry with the given RSN, splits, date, and items. The last three are optional but must be added in that order (so to add a date without adding a split value, use 0. e.g !add Player, 0, 6/12/2019). Requires the @ADMIN role.",
+    "n_remove": '.remove <RSN>',
+    "v_remove": "Sets the player's manual rank as \"Ex-Member\"",
     "footer": "Bot designed by Xaad#1337"
 }
 

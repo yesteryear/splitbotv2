@@ -224,10 +224,24 @@ class DocScanner:
         # Confirms user was added
         return self.get_split(name)
 
+    @Decor.reconnect
+    def remove_user(self, name):
+        """Marked member as ex-member"""
+        # Generates list
+        splits_list = self.get_all_splits()
+
+        if name not in splits_list:
+            return None
+        splits_vals = splits_list[name]
+
+        # If index is valid, sets member to Ex-Member
+        self.sheet.update_cell(splits_vals[0], 8, "Ex-Member")
+        return True
 
 
 # The error code is gspread.exceptions.APIError
 if __name__ == "__main__":
     test = DocScanner("https://docs.google.com/spreadsheets/d/1Py0pico9VWu0Nno0nuVFl6kBwZrkmxM8rqlSMWtuGbo/edit#gid=176933786", "test")
+    test.remove_user('Reavy')
 
 

@@ -73,6 +73,7 @@ class RedemptionBot(discord.Client):
         .check
         .update
         .add
+        .remove
         .splits_help
         """
         if command == 'check':
@@ -189,6 +190,21 @@ class RedemptionBot(discord.Client):
             else:
                 await self.send_user(name, channel, guild)
 
+
+        if command == 'remove':
+            print(f'User {author} removing: "{msg}"')
+            await channel.trigger_typing()
+
+            result = self.doc.remove_user(msg)
+
+            if result is None:
+                await channel.send(f'Cant find "{msg}" on the sheet')
+            else:
+                await channel.send(f'Player {msg} marked as Ex-Member')
+
+
+
+
         if command == 'splits_help':
             await channel.trigger_typing()
             # Sends help text
@@ -203,6 +219,7 @@ class RedemptionBot(discord.Client):
             emb.add_field(name=em['n_check'], value=em['v_check'], inline=False)
             emb.add_field(name=em['n_up'], value=v_up, inline=False)
             emb.add_field(name=em['n_add'], value=v_add, inline=False)
+            emb.add_field(name=em['n_remove'], value=em['v_remove'], inline=False)
             emb.set_footer(text=em['footer'])
             await channel.send(embed=emb)
 
