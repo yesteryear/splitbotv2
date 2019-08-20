@@ -42,7 +42,7 @@ class RedemptionBot(discord.Client):
             return
 
         # Verify command was sent
-        command = re.search(r'^.[a-z_]+', message.content)
+        command = re.search(r'^\.[a-z_]+', message.content)
         if command is None:
             return
 
@@ -318,3 +318,7 @@ def start():
 
 if __name__ == "__main__":
     start()
+    """ Update Log: 
+    8/20: Corrected regex error for the first character in the command to properly
+    identify "."
+    """
