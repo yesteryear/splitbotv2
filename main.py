@@ -203,7 +203,8 @@ class RedemptionBot(discord.Client):
                 await channel.send(f'Player {msg} marked as Ex-Member')
 
 
-
+        if command == 'splits_status':
+            await channel.send('Bot Active')
 
         if command == 'splits_help':
             await channel.trigger_typing()
@@ -275,6 +276,7 @@ class RedemptionBot(discord.Client):
         await channel.send(embed=embed)
 
 
+    
 def start():
     print("Initiating...")
     try:
